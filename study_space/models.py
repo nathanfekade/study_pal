@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 class Book(models.Model):
     title = models.CharField(max_length=50)
     user = models.ForeignKey(User, related_name='book_user', on_delete=models.CASCADE)
+    file = models.FileField(upload_to='files/')
 
     class Meta:
         constraints = [
