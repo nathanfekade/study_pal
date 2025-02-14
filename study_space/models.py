@@ -12,7 +12,7 @@ class Book(models.Model):
 
 class Questionairre(models.Model):
 
-    DETAIL_ChOICE = [
+    DETAIL_CHOICE = [
         ('basic', 'BASIC'),
         ('intermediate', 'INTERMEDIATE'),
         ('in-depth', 'IN-DEPTH'),
@@ -21,6 +21,6 @@ class Questionairre(models.Model):
     book = models.ForeignKey(Book, related_name='questionairre_book', on_delete=models.CASCADE)
     user = models.ForeignKey(User, related_name='questionairre_user', on_delete=models.CASCADE)
     question_answers = models.TextField()
-    detail_level = models.CharField(max_length=20, choices=DETAIL_ChOICE, default='basic')
+    detail_level = models.CharField(max_length=20, choices=DETAIL_CHOICE, default='basic')
 
 
