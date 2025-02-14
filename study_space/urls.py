@@ -3,5 +3,5 @@ from study_space import views
 from django.urls.resolvers import URLPattern
 
 urlpatterns = [
-    path('study/',views.StudyList.as_view(), name='study-list')
+    path('book/',views.BookList.as_view(), name='book-list')
 ]
