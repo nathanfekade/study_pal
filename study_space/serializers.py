@@ -11,5 +11,5 @@ class QuestionairreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Questionairre
         fields = '__all__'
-        read_only_fields = ['user']
+        read_only_fields = ['user', 'question_answers']
 
