@@ -50,7 +50,7 @@ class BookDetail(APIView):
     @swagger_auto_schema(request_body=BookSerializer, responses={200: BookSerializer})
     def put(self, request, pk, format=None):
         book = self.get_object(pk=pk, user= request.user)
-        serializer = BookSerializer(book, request= request.data)
+        serializer = BookSerializer(book, data= request.data)
         if serializer.is_valid():
             serializer.save(user= request.user)
             return Response(serializer.data, status=status.HTTP_200_OK)
