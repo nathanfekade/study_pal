@@ -16,7 +16,7 @@ class Questionairre(models.Model):
     DETAIL_CHOICE = [
         ('basic', 'BASIC'),
         ('intermediate', 'INTERMEDIATE'),
-        ('in-depth', 'IN-DEPTH'),
+        ('detailed', 'DETAILED'),
     ]
 
     book = models.ForeignKey(Book, related_name='questionairre_book', on_delete=models.CASCADE)
