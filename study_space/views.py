@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import Http404
+from drf_yasg import openapi
 
 
 
@@ -42,19 +43,52 @@ class BookDetail(APIView):
         except Book.DoesNotExist:
             raise Http404
         
-    def get(self, request, pk, format=None):
-        book = self.get_object(pk=pk,user=request.user)
+    def get(self, request, current_title, format=None):
+        book = Book.objects.filter(title__iexact=current_title, user=request.user).first()
+        if not book:   
+            return Response("book not found",status.HTTP_404_NOT_FOUND)
         serializer = BookSerializer(book)
+        file_url = serializer.data['file']
+        print(file_url)
         return Response(serializer.data)
-    
-    @swagger_auto_schema(request_body=BookSerializer, responses={200: BookSerializer})
-    def put(self, request, pk, format=None):
-        book = self.get_object(pk=pk, user= request.user)
-        serializer = BookSerializer(book, data= request.data)
-        if serializer.is_valid():
-            serializer.save(user= request.user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'title',
+                openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False, 
+                description='New title (optional)',
+                min_length=1,
+                max_length=50,
+            ),
+            openapi.Parameter(
+                'file',
+                openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,  
+                description='New file (optional)',
+            ),
+        ],
+        responses={200: BookSerializer},
+    )
+    def put(self, request, current_title, format=None):
+        book = Book.objects.filter(title__iexact=current_title, user=request.user).first()
+        
+        if not book:
+            return Response({"error": "Book not found with the given current title."}, status=status.HTTP_404_NOT_FOUND)
+        
+
+        serializer = BookSerializer(book, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()  
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+   
+
     
     def delete(self, request, pk, format=None):
         book = self.get_object(pk=pk, user= request.user)
