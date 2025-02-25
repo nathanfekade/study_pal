@@ -106,11 +106,15 @@ class QuestionairreList(APIView):
     
     @swagger_auto_schema(request_body=QuestionairreSerializer, responses={201: QuestionairreSerializer})    
     def post(self, request, format=None):
-        serializer = QuestionairreSerializer(data = request.data)
+        
+        serializer = QuestionairreSerializer(data=request.data, context={"request": request})
+        
         if serializer.is_valid():
-            serializer.save(user= request.user)
+            serializer.save()  
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class QuestionairreDetail(APIView):
 
@@ -129,16 +133,16 @@ class QuestionairreDetail(APIView):
         serializer = QuestionairreSerializer(questionairre)
         return Response(serializer.data)
 
-    @swagger_auto_schema(request_body=QuestionairreSerializer, responses={200: QuestionairreSerializer})
-    def put(self, request, pk,format= None):
+    # @swagger_auto_schema(request_body=QuestionairreSerializer, responses={200: QuestionairreSerializer})
+    # def put(self, request, pk,format= None):
 
-        questionairre = self.get_object(pk=pk, user=request.user) 
-        serializer = QuestionairreSerializer(questionairre, data= request.data)
+    #     questionairre = self.get_object(pk=pk, user=request.user) 
+    #     serializer = QuestionairreSerializer(questionairre, data= request.data)
 
-        if serializer.is_valid():
-            serializer.save(user= request.user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #     if serializer.is_valid():
+    #         serializer.save(user= request.user)
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
     def delete(self, request, pk, format=None):
 
