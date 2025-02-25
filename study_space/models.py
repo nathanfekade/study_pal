@@ -21,7 +21,7 @@ class Questionairre(models.Model):
 
     book = models.ForeignKey(Book, related_name='questionairre_book', on_delete=models.CASCADE)
     user = models.ForeignKey(User, related_name='questionairre_user', on_delete=models.CASCADE)
-    question_answers = models.TextField()
+    question_answers_file = models.FileField(upload_to='questions/', blank=True, null=True)  
     detail_level = models.CharField(max_length=20, choices=DETAIL_CHOICE, default='basic')
 
 
