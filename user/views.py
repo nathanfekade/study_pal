@@ -9,9 +9,8 @@ from .serializers import UserSerializer
 
 
 class UserList(APIView):
-    # permission_classes = [AllowAny]
 
-# TO GET ALL
+# TO GET ALL USERS
     def get(self, request, format=None):
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)

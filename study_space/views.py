@@ -48,8 +48,6 @@ class BookDetail(APIView):
         if not book:   
             return Response("book not found",status.HTTP_404_NOT_FOUND)
         serializer = BookSerializer(book)
-        file_url = serializer.data['file']
-        print(file_url)
         return Response(serializer.data)
 
 
