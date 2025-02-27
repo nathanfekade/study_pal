@@ -142,7 +142,6 @@ class QuestionairreSerializer(serializers.ModelSerializer):
 
             
             if i == count:
-                # self.under_token_limit(prompt=prompt)
                 if self.under_token_limit(prompt=prompt)[0] == False:
                         self.intermediate(path)
                         break
@@ -152,7 +151,6 @@ class QuestionairreSerializer(serializers.ModelSerializer):
                 count +=10
 
             elif num_of_pages-1 == i and i < count:
-                # self.under_token_limit(prompt=prompt)
                 if self.under_token_limit(prompt=prompt)[0] == False:
                         self.intermediate(path)
                         break
@@ -194,7 +192,6 @@ class QuestionairreSerializer(serializers.ModelSerializer):
             prompt = prompt + text
             
             if i == count:
-                # self.under_token_limit(prompt=prompt)
                 if self.under_token_limit(prompt=prompt)[0] == False:
                         self.detailed(path)
                         break
@@ -204,7 +201,6 @@ class QuestionairreSerializer(serializers.ModelSerializer):
                 count +=6
                 
             elif num_of_pages-1 == i and i < count:
-                # self.under_token_limit(prompt=prompt)
                 if self.under_token_limit(prompt=prompt)[0] == False:
                         self.detailed(path)
                         break
@@ -241,7 +237,6 @@ class QuestionairreSerializer(serializers.ModelSerializer):
             prompt = prompt + text
             
             if i == count:
-                # self.under_token_limit(prompt=prompt)
                 if self.under_token_limit(prompt=prompt)[0] == False:
                         if prompt.endswith(text):
                             prompt = prompt[:-len(text)]
@@ -251,7 +246,6 @@ class QuestionairreSerializer(serializers.ModelSerializer):
                 count +=3
             
             elif num_of_pages-1 == i  and i < count:
-                # self.under_token_limit(prompt=prompt)
                 if self.under_token_limit(prompt=prompt)[0] == False:
                         if prompt.endswith(text):
                             prompt = prompt[:-len(text)]
