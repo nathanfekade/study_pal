@@ -3,9 +3,9 @@ from rest_framework import serializers
 from study_space.models import Book, Questionairre
 from pypdf import PdfReader
 from google import genai
-from pypdf import PdfReader
 import google.generativeai as generativeai
 import os
+from django.conf import settings
 
 
 class BookSerializer(serializers.ModelSerializer):
@@ -53,14 +53,12 @@ class QuestionairreSerializer(serializers.ModelSerializer):
 
 
 
-        # question_answers = self.generate_question_answers(book, detail_level)
         question_file_path = self.generate_question_file(book, detail_level)
 
         return Questionairre.objects.create(
             user=user,
             book=book,
             detail_level=detail_level,
-            # question_answers=question_answers
             question_answers_file=question_file_path
 
         )
@@ -90,8 +88,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
 
     def under_token_limit(self, prompt, model_name="gemini-2.0-flash", max_tokens=1048000):
         try:
-            # generativeai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-            generativeai.configure(api_key="AIzaSyB8sByhFGfgOFRnOKw82xC0T-SJEd2xIz8")
+            generativeai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
             
             model = generativeai.GenerativeModel(model_name)
             input_tokens = model.count_tokens(prompt).total_tokens
@@ -106,7 +103,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
 
 
     def question_generator(self, prompt):
-        client = genai.Client(api_key="AIzaSyB8sByhFGfgOFRnOKw82xC0T-SJEd2xIz8")
+        client = genai.Client(api_key=os.environ.get('GEMINI_API_KEY'))
         response = client.models.generate_content(
             model="gemini-2.0-flash", contents=prompt
         )
@@ -129,7 +126,10 @@ class QuestionairreSerializer(serializers.ModelSerializer):
                 
                 text = page.extract_text()
                 prompt = prompt + " " + text
-            
+
+            if prompt.strip() == question.strip():
+                return "sorry i was unable to generate questions"
+
             question_answer = question_answer + self.question_generator(prompt=prompt)
             return question_answer
 
@@ -142,30 +142,25 @@ class QuestionairreSerializer(serializers.ModelSerializer):
 
             
             if i == count:
-                print(count)
-                print(self.under_token_limit(prompt=prompt))
+                # self.under_token_limit(prompt=prompt)
                 if self.under_token_limit(prompt=prompt)[0] == False:
                         self.intermediate(path)
                         break
                 question_answer = question_answer + self.question_generator(prompt=prompt)
-                print(question_answer)
+                prompt = question
                 
                 count +=10
 
             elif num_of_pages-1 == i and i < count:
-                print(num_of_pages)
-                print(self.under_token_limit(prompt=prompt))
+                # self.under_token_limit(prompt=prompt)
                 if self.under_token_limit(prompt=prompt)[0] == False:
                         self.intermediate(path)
                         break
                 
-            
-                # question_answer = question_answer + self.question_generator(prompt=prompt)
-                # print(question_answer)  
-                # f = open(f"./media/questions", "a")
-                # f.write("Now the file has more content!")
-                # f.close()     
-                return question_answer
+                question_answer = question_answer + self.question_generator(prompt=prompt)
+                prompt = question
+                
+        return question_answer
 
     def intermediate(self, path):
 
@@ -184,6 +179,10 @@ class QuestionairreSerializer(serializers.ModelSerializer):
                 text = page.extract_text()
                 prompt = prompt + " " + text
             
+            
+            if prompt.strip() == question.strip():
+                return "sorry i was unable to generate questions"
+            
             question_answer = question_answer + self.question_generator(prompt=prompt)
             return question_answer
 
@@ -195,20 +194,24 @@ class QuestionairreSerializer(serializers.ModelSerializer):
             prompt = prompt + text
             
             if i == count:
-                print(count)
-                print(self.under_token_limit(prompt=prompt))
+                # self.under_token_limit(prompt=prompt)
+                if self.under_token_limit(prompt=prompt)[0] == False:
+                        self.detailed(path)
+                        break
+                question_answer = question_answer + self.question_generator(prompt=prompt)
+                prompt = question
+                
                 count +=6
-                if self.under_token_limit(prompt=prompt)[0] == False:
-                        self.detailed(path)
-                        break
-
+                
             elif num_of_pages-1 == i and i < count:
-                print(num_of_pages)
-                print(self.under_token_limit(prompt=prompt))
+                # self.under_token_limit(prompt=prompt)
                 if self.under_token_limit(prompt=prompt)[0] == False:
                         self.detailed(path)
                         break
-
+                
+                question_answer = question_answer + self.question_generator(prompt=prompt)
+                prompt = question
+        return question_answer
 
     def detailed(self, path):
 
@@ -226,7 +229,8 @@ class QuestionairreSerializer(serializers.ModelSerializer):
                 
                 text = page.extract_text()
                 prompt = prompt + " " + text
-            
+            if prompt.strip() == question.strip():
+                return "sorry i was unable to generate questions"
             question_answer = question_answer + self.question_generator(prompt=prompt)
             return question_answer
 
@@ -237,21 +241,23 @@ class QuestionairreSerializer(serializers.ModelSerializer):
             prompt = prompt + text
             
             if i == count:
-                print(count)
-                print(self.under_token_limit(prompt=prompt))
-                count +=3
+                # self.under_token_limit(prompt=prompt)
                 if self.under_token_limit(prompt=prompt)[0] == False:
                         if prompt.endswith(text):
                             prompt = prompt[:-len(text)]
+                question_answer = question_answer + self.question_generator(prompt=prompt)
+                prompt = question
+                
+                count +=3
             
             elif num_of_pages-1 == i  and i < count:
-                print(num_of_pages)
-                print(self.under_token_limit(prompt=prompt))
+                # self.under_token_limit(prompt=prompt)
                 if self.under_token_limit(prompt=prompt)[0] == False:
                         if prompt.endswith(text):
                             prompt = prompt[:-len(text)]
 
+                question_answer = question_answer + self.question_generator(prompt=prompt)
+                prompt = question
 
-
-
+        return question_answer
 
