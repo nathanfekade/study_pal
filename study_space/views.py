@@ -9,16 +9,16 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import Http404
 from drf_yasg import openapi
-
-
-
-
+from rest_framework.authentication import TokenAuthentication
 
 class BookList(APIView):
+
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
     parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request, format=None):
+        
         books = Book.objects.filter(user= request.user)
         serializer = BookSerializer(books, many=True)
         return Response(serializer.data)
@@ -35,13 +35,10 @@ class BookList(APIView):
 class BookDetail(APIView):
 
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
     parser_classes = [MultiPartParser, FormParser]
 
-    def get_object(self, pk, user):
-        try:
-            return Book.objects.get(pk=pk, user=user)
-        except Book.DoesNotExist:
-            raise Http404
+
         
     def get(self, request, current_title, format=None):
         book = Book.objects.filter(title__iexact=current_title, user=request.user).first()
@@ -88,15 +85,18 @@ class BookDetail(APIView):
    
 
     
-    def delete(self, request, pk, format=None):
-        book = self.get_object(pk=pk, user= request.user)
-        book.delete()
+    def delete(self, request, current_title, format=None):
+        book = Book.objects.filter(title__iexact=current_title, user=request.user).first()
+        if not book:   
+            return Response("book not found",status.HTTP_404_NOT_FOUND)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class QuestionairreList(APIView):
 
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+
     def get(self, request, format=None):
         questionairre = Questionairre.objects.filter(user= request.user)
         serializer = QuestionairreSerializer(questionairre, many=True)
@@ -117,6 +117,8 @@ class QuestionairreList(APIView):
 class QuestionairreDetail(APIView):
 
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+
 
     def get_object(self, pk, user):
         

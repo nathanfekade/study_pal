@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from django.http import Http404
 from .serializers import UserSerializer
+from rest_framework.authentication import TokenAuthentication
 
 
 class UserList(APIView):
@@ -30,6 +31,8 @@ class UserList(APIView):
 class UserDetail(APIView):
     
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+
 
     def get(self, request, format=None):
 
@@ -49,4 +52,4 @@ class UserDetail(APIView):
     def delete(self, request, format=None):
         
         request.user.delete()
-        return Response(status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
