@@ -67,11 +67,12 @@ class QuestionairreSerializer(serializers.ModelSerializer):
             questions = self.generate_question_answers(book, detail_level)
 
             filename = f"{book.title}_{detail_level}_{int(time.time())}.txt"
-            file_path = os.path.join("media/questions", filename)
+            file_path = os.path.join("questions", filename)
 
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            full_path = os.path.join(settings.MEDIA_ROOT, "questions")
+            os.makedirs(full_path, exist_ok=True)
 
-            with open(file_path, "w", encoding="utf-8") as f:
+            with open(os.path.join(settings.MEDIA_ROOT, file_path), "w", encoding="utf-8") as f:
                 f.write(questions)
 
             return file_path

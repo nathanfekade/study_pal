@@ -10,6 +10,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import Http404
 from drf_yasg import openapi
 from rest_framework.authentication import TokenAuthentication
+import os
 
 class BookList(APIView):
 
@@ -89,6 +90,9 @@ class BookDetail(APIView):
         book = Book.objects.filter(title__iexact=current_title, user=request.user).first()
         if not book:   
             return Response("book not found",status.HTTP_404_NOT_FOUND)
+        os.remove(book.file.path)
+        # print(book.file.url)
+        book.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -120,16 +124,13 @@ class QuestionairreDetail(APIView):
     authentication_classes = [TokenAuthentication]
 
 
-    def get_object(self, pk, user):
-        
-        try:    
-            return Questionairre.objects.get(pk= pk, user= user)
-        except Questionairre.DoesNotExist:
-            raise Http404
+
     
     def get(self, request, pk, format= None):
 
-        questionairre = self.get_object(pk=pk, user=request.user)
+        questionairre = Questionairre.objects.filter(pk=pk, user=request.user).first()
+        if not questionairre:
+            return Response("questionairre not found", status=status.HTTP_404_NOT_FOUND)
         serializer = QuestionairreSerializer(questionairre)
         return Response(serializer.data)
 
@@ -145,7 +146,24 @@ class QuestionairreDetail(APIView):
     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
     def delete(self, request, pk, format=None):
+        questionairre = Questionairre.objects.filter(pk= pk, user=request.user).first()
+        if not questionairre:
+            return Response('questionairre not found', status=status.HTTP_404_NOT_FOUND)
+        try:
+            print(f"File url: {questionairre.question_answers_file.url}\n")
+            print(f"File name: {questionairre.question_answers_file.name}\n")
+            file_path = questionairre.question_answers_file.path
+            print(f"Full file path: {file_path}\n")
 
-        questionairre = self.get_object(pk, user= request.user)
-        questionairre.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                questionairre.delete()
+            else:
+                return Response("File not found ", status=status.HTTP_400_BAD_REQUEST)
+            
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            print(f"Full error: {str(e)}")
+            return Response(f"Error deleting file: {str(e)}", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
