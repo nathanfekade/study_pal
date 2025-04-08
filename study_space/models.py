@@ -5,7 +5,7 @@ from . import validators as validate
 class Book(models.Model):
     title = models.CharField(max_length=50)
     user = models.ForeignKey(User, related_name='book_user', on_delete=models.CASCADE)
-    file = models.FileField(upload_to='files/', validators=[validate.validate_fIle_type])
+    file = models.FileField(upload_to='files/', validators=[validate.validate_fIle_size_and_type])
 
     class Meta:
         constraints = [
