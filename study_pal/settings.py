@@ -138,7 +138,7 @@ SWAGGER_SETTINGS = {
             'type': 'apiKey',
             'name': 'Authorization',
             'in': 'header',
-            'description': 'Enter your token here'
+            'description': 'Enter your token here by preceding it with word token'
         }
     },
     'USE_SESSION_AUTH': False,
