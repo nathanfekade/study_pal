@@ -6,6 +6,7 @@ from google import genai
 import google.generativeai as generativeai
 import os
 from django.conf import settings
+from django.core.cache import cache
 
 
 class BookSerializer(serializers.ModelSerializer):
@@ -105,10 +106,22 @@ class QuestionairreSerializer(serializers.ModelSerializer):
 
     def question_generator(self, prompt):
         client = genai.Client(api_key=os.environ.get('GEMINI_API_KEY'))
-        response = client.models.generate_content(
-            model="gemini-2.0-flash", contents=prompt
-        )
-        return response.text
+       
+        while True:
+
+            last_request_time = cache.get('last_gemini_request_time', 0)
+            now = time.time()
+            delay = 4
+
+            if now - last_request_time >= delay:
+                 
+                response = client.models.generate_content(
+                    model="gemini-2.0-flash", contents=prompt
+                )
+                cache.set('last_gemini_request_time', time.time())
+                return response.text
+            else:
+                 time.sleep(delay - (now - last_request_time))
 
 
     def basic(self, path):
@@ -138,7 +151,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
             page = reader.pages[i]
             
             text = page.extract_text()
-            prompt = prompt + " "+ text
+            prompt = prompt + " " + text
 
 
             
@@ -190,7 +203,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
             page = reader.pages[i]
             
             text = page.extract_text()
-            prompt = prompt + text
+            prompt = prompt + " "+ text
             
             if i == count:
                 if self.under_token_limit(prompt=prompt)[0] == False:
@@ -235,7 +248,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
             page = reader.pages[i]
             
             text = page.extract_text()
-            prompt = prompt + text
+            prompt = prompt + " " + text
             
             if i == count:
                 if self.under_token_limit(prompt=prompt)[0] == False:
