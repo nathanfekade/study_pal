@@ -138,7 +138,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
             page = reader.pages[i]
             
             text = page.extract_text()
-            prompt = prompt + text
+            prompt = prompt + " "+ text
 
 
             
