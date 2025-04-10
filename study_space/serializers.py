@@ -21,10 +21,12 @@ class QuestionairreSerializer(serializers.ModelSerializer):
         queryset=Book.objects.all(),
         slug_field='title'  
     )
+    start_page = serializers.IntegerField(write_only=True, required=False)
+    end_page = serializers.IntegerField(write_only=True, required=False)
     
     class Meta:
         model = Questionairre
-        fields = '__all__'
+        fields = ['book','user','question_answers_file','detail_level', 'start_page', 'end_page']
         read_only_fields = ['user', 'question_answers_file']
 
     def __init__(self, *args, **kwargs):
@@ -48,14 +50,13 @@ class QuestionairreSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context.get('request')  
         user = request.user if request else None  
-
         book = validated_data.get('book')
         detail_level = validated_data.get('detail_level')
+        start_page = validated_data.pop('start_page', None)
+        end_page = validated_data.pop('end_page', None)
+        question_file_path = self.generate_question_file(book, detail_level, start_page, end_page)
 
-
-
-        question_file_path = self.generate_question_file(book, detail_level)
-
+        
         return Questionairre.objects.create(
             user=user,
             book=book,
@@ -64,8 +65,8 @@ class QuestionairreSerializer(serializers.ModelSerializer):
 
         )
 
-    def generate_question_file(self, book, detail_level):
-            questions = self.generate_question_answers(book, detail_level)
+    def generate_question_file(self, book, detail_level, start_page, end_page):
+            questions = self.generate_question_answers(book, detail_level, start_page, end_page)
 
             filename = f"{book.title}_{detail_level}_{int(time.time())}.txt"
             file_path = os.path.join("questions", filename)
@@ -79,14 +80,14 @@ class QuestionairreSerializer(serializers.ModelSerializer):
             return file_path
 
 
-    def generate_question_answers(self, book, detail_level):
+    def generate_question_answers(self, book, detail_level, start_page, end_page):
 
         if detail_level == 'basic':
-            return self.basic(book.file)
+            return self.question_detail_level(book.file, 9, start_page, end_page)
         elif detail_level == 'intermediate':
-            return self.intermediate(book.file)
+            return self.question_detail_level(book.file, 5, start_page, end_page)
         elif detail_level == 'detailed':
-            return self.detailed(book.file)
+            return self.question_detail_level(book.file, 3, start_page, end_page)
 
     def under_token_limit(self, prompt, model_name="gemini-2.0-flash", max_tokens=1048000):
         try:
@@ -124,148 +125,103 @@ class QuestionairreSerializer(serializers.ModelSerializer):
                  time.sleep(delay - (now - last_request_time))
 
 
-    def basic(self, path):
-
-        reader = PdfReader(path)
-        num_of_pages = len(reader.pages)
-        question = 'can you provide well thougt out questions and answers from the text below do not add any other thing and don\'t number the questions \n\n'        
-        prompt = question 
-        question_answer = ""
-
-        count = 9
-
-        if num_of_pages <= count:
-            for i in range(num_of_pages):
-                page = reader.pages[i]
-                
-                text = page.extract_text()
-                prompt = prompt + " " + text
-
-            if prompt.strip() == question.strip():
-                return "sorry i was unable to generate questions"
-
-            question_answer = question_answer + self.question_generator(prompt=prompt)
-            return question_answer
-
-        for i in range(num_of_pages):
-            page = reader.pages[i]
-            
-            text = page.extract_text()
-            prompt = prompt + " " + text
-
-
-            
-            if i == count:
-                if self.under_token_limit(prompt=prompt)[0] == False:
-                        self.intermediate(path)
-                        break
-                question_answer = question_answer + self.question_generator(prompt=prompt)
-                prompt = question
-                
-                count +=10
-
-            elif num_of_pages-1 == i and i < count:
-                if self.under_token_limit(prompt=prompt)[0] == False:
-                        self.intermediate(path)
-                        break
-                
-                question_answer = question_answer + self.question_generator(prompt=prompt)
-                prompt = question
-                
-        return question_answer
-
-    def intermediate(self, path):
-
-        reader = PdfReader(path)
-        num_of_pages = len(reader.pages)
-        question = 'can you provide well thougt out questions and answers from the text below do not add any other text into it and don\'t number the questions \n\n'        
-        prompt = question 
-        question_answer = ""
+    def question_detail_level(self, path, page_count , start_page, end_page):
         
-        count = 5
-
-        if num_of_pages <= count:
-            for i in range(num_of_pages):
-                page = reader.pages[i]
-                
-                text = page.extract_text()
-                prompt = prompt + " " + text
-            
-            
-            if prompt.strip() == question.strip():
-                return "sorry i was unable to generate questions"
-            
-            question_answer = question_answer + self.question_generator(prompt=prompt)
-            return question_answer
-
-
-        for i in range(num_of_pages):
-            page = reader.pages[i]
-            
-            text = page.extract_text()
-            prompt = prompt + " "+ text
-            
-            if i == count:
-                if self.under_token_limit(prompt=prompt)[0] == False:
-                        self.detailed(path)
-                        break
-                question_answer = question_answer + self.question_generator(prompt=prompt)
-                prompt = question
-                
-                count +=6
-                
-            elif num_of_pages-1 == i and i < count:
-                if self.under_token_limit(prompt=prompt)[0] == False:
-                        self.detailed(path)
-                        break
-                
-                question_answer = question_answer + self.question_generator(prompt=prompt)
-                prompt = question
-        return question_answer
-
-    def detailed(self, path):
-
         reader = PdfReader(path)
         num_of_pages = len(reader.pages)
-        question = 'can you provide well thougt out questions and answers from the text below do not add any other text into it and don\'t number the questions \n\n'        
+        question = 'can you provide well thought out questions and answers from the text below do not add any other thing and don\'t number the questions \n\n'        
         prompt = question 
         question_answer = ""
-        
-        count = 2
+        count = page_count - 1
 
-        if num_of_pages <= count:
-            for i in range(num_of_pages):
+        if start_page != None and end_page != None:
+            start_page = start_page - 1
+            end_page = end_page + 1
+            
+            
+            if start_page > end_page:
+                raise Exception("Error: start page can not be greater than end page")
+            
+            if start_page == end_page:
+                 page = reader.pages[start_page]
+                 text = page.extract_text()
+                 prompt = prompt + " " + text
+                 if prompt.strip() == question.strip():
+                      return "sorry i was unable to generate questions"
+                 question_answer = question_answer + self.question_generator(prompt=prompt)
+                 return question_answer
+
+            if (end_page-start_page) <= count: 
+                for i in range(start_page, end_page):
+                     page = reader.pages[i]
+                     text = page.extract_text()
+                     prompt = prompt + " " + text
+                if prompt.strip() == question.strip():
+                     return "sorry i was unable to generate questions"
+                question_answer = question_answer + self.question_generator(prompt=prompt)
+                return question_answer  
+            
+            for i in range(start_page, end_page):
+
                 page = reader.pages[i]
-                
                 text = page.extract_text()
                 prompt = prompt + " " + text
-            if prompt.strip() == question.strip():
-                return "sorry i was unable to generate questions"
-            question_answer = question_answer + self.question_generator(prompt=prompt)
+
+                if i == count:
+                     if self.under_token_limit(prompt=prompt)[0] == False:
+                          self.intermediate(path)
+                          break
+                     question_answer = question_answer + self.question_generator(prompt=prompt)
+                     prompt = question
+                     count += page_count
+
+                     
+                elif end_page-1 == i and i < count:
+                     if self.under_token_limit(prompt=prompt)[0] == False:
+                          self.intermediate(path)
+                          break
+                     question_answer = question_answer + self.question_generator(prompt=prompt)
+                     prompt = question
+
+            return question_answer
+                 
+        else:
+            if num_of_pages <= count:
+                for i in range(num_of_pages):
+                    page = reader.pages[i]
+                    text = page.extract_text()
+                    prompt = prompt + " " + text
+
+                if prompt.strip() == question.strip():
+                    return "sorry i was unable to generate questions"
+
+                question_answer = question_answer + self.question_generator(prompt=prompt)
+                return question_answer
+
+            for i in range(num_of_pages):
+                
+                page = reader.pages[i]
+                text = page.extract_text()
+                prompt = prompt + " " + text
+
+                if i == count:
+                    if self.under_token_limit(prompt=prompt)[0] == False:
+                            self.intermediate(path)
+                            break
+                    question_answer = question_answer + self.question_generator(prompt=prompt)
+                    prompt = question
+                    
+                    count += page_count
+
+                elif num_of_pages-1 == i and i < count:
+                    if self.under_token_limit(prompt=prompt)[0] == False:
+                            self.intermediate(path)
+                            break
+                    
+                    question_answer = question_answer + self.question_generator(prompt=prompt)
+                    prompt = question
+
+                    
             return question_answer
 
-        for i in range(num_of_pages):
-            page = reader.pages[i]
-            
-            text = page.extract_text()
-            prompt = prompt + " " + text
-            
-            if i == count:
-                if self.under_token_limit(prompt=prompt)[0] == False:
-                        if prompt.endswith(text):
-                            prompt = prompt[:-len(text)]
-                question_answer = question_answer + self.question_generator(prompt=prompt)
-                prompt = question
-                
-                count +=3
-            
-            elif num_of_pages-1 == i  and i < count:
-                if self.under_token_limit(prompt=prompt)[0] == False:
-                        if prompt.endswith(text):
-                            prompt = prompt[:-len(text)]
-
-                question_answer = question_answer + self.question_generator(prompt=prompt)
-                prompt = question
-
-        return question_answer
 
