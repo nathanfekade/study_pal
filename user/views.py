@@ -12,10 +12,10 @@ from rest_framework.authentication import TokenAuthentication
 class UserList(APIView):
 
 # TO GET ALL USERS
-    def get(self, request, format=None):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    # def get(self, request, format=None):
+    #     users = User.objects.all()
+    #     serializer = UserSerializer(users, many=True)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
     
     
     @swagger_auto_schema(request_body=UserSerializer, responses={201: UserSerializer})
