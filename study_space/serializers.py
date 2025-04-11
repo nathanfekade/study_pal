@@ -135,13 +135,16 @@ class QuestionairreSerializer(serializers.ModelSerializer):
         count = page_count - 1
 
         if start_page != None and end_page != None:
-            start_page = start_page - 1
-            end_page = end_page + 1
             
+            end_page = end_page + 1
             
             if start_page > end_page:
                 raise Exception("Error: start page can not be greater than end page")
             
+            if start_page<1 or end_page>num_of_pages:
+                raise Exception("Error: Please enter valid page number")
+            
+            start_page = start_page - 1
             if start_page == end_page:
                  page = reader.pages[start_page]
                  text = page.extract_text()
