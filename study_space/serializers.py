@@ -1,4 +1,5 @@
 import time
+import uuid
 from rest_framework import serializers
 from study_space.models import Book, Questionairre
 from pypdf import PdfReader
@@ -46,6 +47,13 @@ class QuestionairreSerializer(serializers.ModelSerializer):
         
         return book
 
+    def validate(self, data):
+        start_page = data.get('start_page')
+        end_page = data.get('end_page')
+        if start_page is not None and end_page is not None:
+            if start_page > end_page:
+                raise serializers.ValidationError({"non_field_errors":"start page can not be greater than end page"})
+        return data
 
     def create(self, validated_data):
         request = self.context.get('request')  
@@ -68,7 +76,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
     def generate_question_file(self, book, detail_level, start_page, end_page):
             questions = self.generate_question_answers(book, detail_level, start_page, end_page)
 
-            filename = f"{book.title}_{detail_level}_{int(time.time())}.txt"
+            filename = f"{book.title}_{detail_level}_{uuid.uuid4().hex[:8]}"
             file_path = os.path.join("questions", filename)
 
             full_path = os.path.join(settings.MEDIA_ROOT, "questions")
@@ -138,11 +146,8 @@ class QuestionairreSerializer(serializers.ModelSerializer):
             
             end_page = end_page + 1
             
-            if start_page > end_page:
-                raise Exception("Error: start page can not be greater than end page")
-            
             if start_page<1 or end_page>num_of_pages:
-                raise Exception("Error: Please enter valid page number")
+                raise serializers.ValidationError("Error: Please enter valid page number")
             
             start_page = start_page - 1
             if start_page == end_page:
@@ -172,7 +177,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
 
                 if i == count:
                      if self.under_token_limit(prompt=prompt)[0] == False:
-                          self.intermediate(path)
+                          raise serializers.ValidationError("Token limit exceeded")
                           break
                      question_answer = question_answer + self.question_generator(prompt=prompt)
                      prompt = question
@@ -181,7 +186,8 @@ class QuestionairreSerializer(serializers.ModelSerializer):
                      
                 elif end_page-1 == i and i < count:
                      if self.under_token_limit(prompt=prompt)[0] == False:
-                          self.intermediate(path)
+                          raise serializers.ValidationError("Token limit exceeded")
+
                           break
                      question_answer = question_answer + self.question_generator(prompt=prompt)
                      prompt = question
@@ -209,7 +215,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
 
                 if i == count:
                     if self.under_token_limit(prompt=prompt)[0] == False:
-                            self.intermediate(path)
+                            raise serializers.ValidationError("Token limit exceeded")
                             break
                     question_answer = question_answer + self.question_generator(prompt=prompt)
                     prompt = question
@@ -218,7 +224,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
 
                 elif num_of_pages-1 == i and i < count:
                     if self.under_token_limit(prompt=prompt)[0] == False:
-                            self.intermediate(path)
+                            raise serializers.ValidationError("Token limit exceeded")
                             break
                     
                     question_answer = question_answer + self.question_generator(prompt=prompt)
