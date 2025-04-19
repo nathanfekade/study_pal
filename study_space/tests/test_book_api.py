@@ -9,23 +9,38 @@ import os
 class BookAPITests(APITestCase):
     def setUp(self):
 
+        self.files_to_clean = []
+
         self.user = User.objects.create_user(username='testuser', password='testpass')
         self.token = Token.objects.create(user=self.user)
-        self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
-
+        
         self.other_user = User.objects.create_user(username='otheruser', password='otherpass')
         self.other_token = Token.objects.create(user=self.other_user)
         
-
+        book_file = SimpleUploadedFile('test.pdf', b'file_content', content_type='application/pdf')
         self.book = Book.objects.create(
             title='Test Book',
             user=self.user,
-            file=SimpleUploadedFile('test.pdf', b'file_content', content_type='application/pdf')
+            file=book_file
         )
+        self.files_to_clean.append(self.book.file.path)
+
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+
 
         self.valid_pdf_path = os.path.join('study_space', 'tests', 'files', 'Chapter_7.pdf')
-    
+
+    def tearDown(self):
+
+        for file_path in self.files_to_clean:
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                    # print(f"Deleted file: {file_path}")
+                except Exception as e:
+                    print(f"Failed to delete file {file_path}: e")
+
     def test_get_book_list_authenticated(self):
 
         response = self.client.get('/book/')
@@ -48,6 +63,8 @@ class BookAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Book.objects.count(), 2)
         self.assertEqual(Book.objects.last().title, 'New Book')
+        book = Book.objects.last()
+        self.files_to_clean.append(book.file.path)
     
     def test_post_book_missing_title(self):
         with open(self.valid_pdf_path, 'rb') as f:
@@ -95,6 +112,7 @@ class BookAPITests(APITestCase):
             response = self.client.put('/book/Test%20Book/', data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.book.refresh_from_db()
+        self.files_to_clean.append(self.book.file.path)
         self.assertTrue(self.book.file.name.endswith('.pdf'))
     
     def test_put_book_detail_update_both(self):
@@ -106,6 +124,7 @@ class BookAPITests(APITestCase):
             response = self.client.put('/book/Test%20Book/', data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.book.refresh_from_db()
+        self.files_to_clean.append(self.book.file.path)
         self.assertEqual(self.book.title, 'Updated Both')
         self.assertTrue(self.book.file.name.endswith('.pdf'))
     
