@@ -8,6 +8,7 @@ import google.generativeai as generativeai
 import os
 from django.conf import settings
 from django.core.cache import cache
+import logging
 
 
 class BookSerializer(serializers.ModelSerializer):
@@ -27,7 +28,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Questionairre
-        fields = ['book','user','question_answers_file','detail_level', 'start_page', 'end_page']
+        fields = ['id','book','user','question_answers_file','detail_level', 'start_page', 'end_page']
         read_only_fields = ['user', 'question_answers_file']
 
     def __init__(self, *args, **kwargs):
@@ -109,7 +110,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
                 return True, input_tokens
 
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logging.error(f"An error occured during token limit check: {e}")
             return False, 0
 
 

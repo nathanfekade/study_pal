@@ -169,10 +169,7 @@ class QuestionairreDetail(APIView):
         if not questionairre:
             return Response('questionairre not found', status=status.HTTP_404_NOT_FOUND)
         try:
-            print(f"File url: {questionairre.question_answers_file.url}\n")
-            print(f"File name: {questionairre.question_answers_file.name}\n")
             file_path = questionairre.question_answers_file.path
-            print(f"Full file path: {file_path}\n")
 
 
             if os.path.exists(file_path):
@@ -184,5 +181,4 @@ class QuestionairreDetail(APIView):
 
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
-            print(f"Full error: {str(e)}")
             return Response(f"Error deleting file: {str(e)}", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
