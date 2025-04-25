@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from study_space.models import Book, Questionairre
 from study_space.serializers import BookSerializer,QuestionairreSerializer
@@ -7,10 +6,12 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.http import Http404
 from drf_yasg import openapi
 from rest_framework.authentication import TokenAuthentication
 import os
+from django.http import HttpResponse
+from wsgiref.util import FileWrapper
+from pathlib import Path
 
 class BookList(APIView):
 
@@ -106,14 +107,33 @@ class QuestionairreList(APIView):
         serializer = QuestionairreSerializer(questionairre, many=True)
         return Response(serializer.data)
     
-    @swagger_auto_schema(request_body=QuestionairreSerializer, responses={201: QuestionairreSerializer})    
+    @swagger_auto_schema(request_body=QuestionairreSerializer,
+        responses={
+        201: openapi.Response
+            (description='File downloaded successfully',
+              schema=openapi.Schema(type=openapi.TYPE_FILE,
+                description='Text file containing the questionnaire')),
+                 
+        400: openapi.Response(description='Validation error', schema=QuestionairreSerializer)})    
     def post(self, request, format=None):
         
         serializer = QuestionairreSerializer(data=request.data, context={"request": request})
         
         if serializer.is_valid():
-            serializer.save()  
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            instance = serializer.save()  
+
+            file_path = Path(instance.question_answers_file.path)
+
+            if file_path.is_file():
+
+                with open(file_path, 'rb') as file_obj:
+                    response = HttpResponse(FileWrapper(file_obj), content_type='text/plain')
+                    filename = file_path.name
+                    response['Content-Disposition'] = f'attachement; filename="{filename}"'
+                    return response
+            else:
+                return Response({"detail": "Error occured while sending file"})
+                
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
