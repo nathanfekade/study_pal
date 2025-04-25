@@ -211,7 +211,6 @@ class QuestionairreSerializerTest(APITestCase):
             user=self.user,
             detail_level='basic'
         )
-        # self.context = {'request': self.client.request(user=self.user)}
     
     def tearDown(self):
 

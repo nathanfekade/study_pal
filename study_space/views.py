@@ -92,7 +92,6 @@ class BookDetail(APIView):
         if not book:   
             return Response("book not found",status.HTTP_404_NOT_FOUND)
         os.remove(book.file.path)
-        # print(book.file.url)
         book.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

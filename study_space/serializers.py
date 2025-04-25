@@ -137,7 +137,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
         
         reader = PdfReader(path)
         num_of_pages = len(reader.pages)
-        question = 'can you provide well thought out questions and answers from the text below do not add any other thing and don\'t number the questions \n\n'        
+        question = 'Generate well-thought-out question and answer pairs based solely on the text below. Format each pair as a single line with the question and answer separated by a semicolon (;). If a question or answer contains multiple lines, replace newline characters with <br> to preserve formatting for Anki. Do not add numbering, extra text, or any other content beyond the question and answer pairs. Ensure semicolons do not appear within the question or answer text by replacing any existing semicolons with commas.'
         prompt = question 
         question_answer = ""
         count = page_count - 1

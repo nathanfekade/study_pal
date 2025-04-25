@@ -82,8 +82,15 @@ WSGI_APPLICATION = 'study_pal.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'mysql.connector.django',
+        'NAME': 'study_pal_db',
+        'USER': 'study_pal_user',
+        'PASSWORD': os.environ.get('MYSQL_PASSWORD'),
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            },
     }
 }
 
@@ -148,11 +155,8 @@ SWAGGER_SETTINGS = {
 }
 CACHES = {
     'default' : {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'my_cache_table',
     }
 }
 
