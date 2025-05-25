@@ -119,19 +119,8 @@ class QuestionairreList(APIView):
         serializer = QuestionairreSerializer(data=request.data, context={"request": request})
         
         if serializer.is_valid():
-            instance = serializer.save()  
-
-            file_path = Path(instance.question_answers_file.path)
-
-            if file_path.is_file():
-
-                with open(file_path, 'rb') as file_obj:
-                    response = HttpResponse(FileWrapper(file_obj), content_type='text/plain')
-                    filename = file_path.name
-                    response['Content-Disposition'] = f'attachement; filename="{filename}"'
-                    return response
-            else:
-                return Response({"detail": "Error occured while sending file"})
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
                 
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -150,8 +139,20 @@ class QuestionairreDetail(APIView):
         questionairre = Questionairre.objects.filter(pk=pk, user=request.user).first()
         if not questionairre:
             return Response("questionairre not found", status=status.HTTP_404_NOT_FOUND)
-        serializer = QuestionairreSerializer(questionairre)
-        return Response(serializer.data)
+        # serializer = QuestionairreSerializer(questionairre)
+        file_path = Path(questionairre.question_answers_file.path)
+        if file_path.is_file():
+            with open(file_path, 'rb') as file_obj:
+                response = HttpResponse(FileWrapper(file_obj), content_type='text/plain')
+                filename = file_path.name
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                return response
+        else:
+            return Response("File not found", status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
 
     # @swagger_auto_schema(request_body=QuestionairreSerializer, responses={200: QuestionairreSerializer})
     # def put(self, request, pk,format= None):
