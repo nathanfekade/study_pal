@@ -188,9 +188,6 @@ class BookModelTest(APITestCase):
             book.full_clean()
     
     
-    def test_pdf_too_many_pages(self):
-        pass
-
 class QuestionairreModelTest(APITestCase):
 
     def setUp(self):

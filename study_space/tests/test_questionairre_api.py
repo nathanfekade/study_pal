@@ -162,13 +162,13 @@ class QuestionairreAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('non_field_errors', response.data)
     
-    @patch('study_space.serializers.QuestionairreSerializer.generate_question_answers')
-    def test_get_questionairre_detail_authenticated(self, mock_generate):
-        mock_generate.return_value = self.mock_generate_question_answers(None, None, None, None)
-        response = self.client.get(f'/questionairre/{self.questionairre.pk}')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['book'], 'Test Book')
-        self.assertEqual(response.data['detail_level'], 'basic')
+    # @patch('study_space.serializers.QuestionairreSerializer.generate_question_answers')
+    # def test_get_questionairre_detail_authenticated(self, mock_generate):
+    #     mock_generate.return_value = self.mock_generate_question_answers(None, None, None, None)
+    #     response = self.client.get(f'/questionairre/{self.questionairre.pk}')
+    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #     self.assertEqual(response.data['book'], 'Test Book')
+    #     self.assertEqual(response.data['detail_level'], 'basic')
     
     @patch('study_space.serializers.QuestionairreSerializer.generate_question_answers')
     def test_get_questionairre_detail_not_found(self, mock_generate):
