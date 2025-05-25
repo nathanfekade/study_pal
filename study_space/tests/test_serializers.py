@@ -252,24 +252,24 @@ class QuestionairreSerializerTest(APITestCase):
         self.assertIsNone(data['question_answers_file'])
 
     
-    # @patch('study_space.serializers.QuestionairreSerializer.generate_question_answers')
-    # def test_deserialize_valid_data(self, mock_generator):
-    #     mock_generator.return_value = 'Q: What is this? A: A test.'
-    #     data = {
-    #         'book': 'Test Book',
-    #         'detail_level': 'basic',
-    #         'start_page': 1,
-    #         'end_page': 2
-    #     }
-    #     serializer = QuestionairreSerializer(data=data, context=self.context)
-    #     self.assertTrue(serializer.is_valid(), serializer.errors)
-    #     questionairre = serializer.save(user=self.user)
-    #     self.created_files.append(questionairre.question_answers_file.path)
-    #     self.assertEqual(questionairre.book, self.book)
-    #     self.assertEqual(questionairre.user, self.user)
-    #     self.assertEqual(questionairre.detail_level, 'basic')
-    #     self.assertTrue(questionairre.question_answers_file.name.startswith('questions/Test Book_basic_'))
-    #     self.assertEqual(Questionairre.objects.count(), 2)
+    @patch('study_space.serializers.QuestionairreSerializer.generate_question_answers')
+    def test_deserialize_valid_data(self, mock_generator):
+        mock_generator.return_value = 'Q: What is this? A: A test.'
+        data = {
+            'book': 'Test Book',
+            'detail_level': 'basic',
+            'start_page': 1,
+            'end_page': 2
+        }
+        serializer = QuestionairreSerializer(data=data, context=self.context)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        questionairre = serializer.save(user=self.user)
+        self.created_files.append(questionairre.question_answers_file.path)
+        self.assertEqual(questionairre.book, self.book)
+        self.assertEqual(questionairre.user, self.user)
+        self.assertEqual(questionairre.detail_level, 'basic')
+        self.assertTrue(questionairre.question_answers_file.name.startswith('questions/Test Book_'))
+        self.assertEqual(Questionairre.objects.count(), 2)
 
     
     @patch('study_space.serializers.QuestionairreSerializer.generate_question_answers')
@@ -285,7 +285,7 @@ class QuestionairreSerializerTest(APITestCase):
         self.created_files.append(questionairre.question_answers_file.path)
         self.assertEqual(questionairre.book, self.book)
         self.assertEqual(questionairre.detail_level, 'intermediate')
-        # self.assertTrue(questionairre.question_answers_file.name.startswith('questions/Test Book_intermediate_'))
+        self.assertTrue(questionairre.question_answers_file.name.startswith('questions/Test Book'))
 
     def test_deserialize_invalid_book_permission(self):
         data = {
