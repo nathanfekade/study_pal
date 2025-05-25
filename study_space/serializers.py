@@ -77,7 +77,7 @@ class QuestionairreSerializer(serializers.ModelSerializer):
     def generate_question_file(self, book, detail_level, start_page, end_page):
             questions = self.generate_question_answers(book, detail_level, start_page, end_page)
 
-            filename = f"{book.title}_{detail_level}_{uuid.uuid4().hex[:8]}.txt"
+            filename = f"{book.title}_{uuid.uuid4().hex[:8]}.txt"
             file_path = os.path.join("questions", filename)
 
             full_path = os.path.join(settings.MEDIA_ROOT, "questions")
