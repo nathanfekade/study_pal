@@ -171,9 +171,7 @@ class BookSerializerTest(APITestCase):
         self.assertEqual(updated_book.user, self.user)
         self.assertTrue(updated_book.file.name.startswith('files/test'))
 
-    
-    def test_pdf_too_many_pages(self):
-        pass
+
 
 class QuestionairreSerializerTest(APITestCase):
 

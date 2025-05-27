@@ -114,6 +114,8 @@ class BookAPITests(APITestCase):
         self.book.refresh_from_db()
         self.files_to_clean.append(self.book.file.path)
         self.assertTrue(self.book.file.name.endswith('.pdf'))
+        self.assertIn('Chapter_7', self.book.file.name)
+
     
     def test_put_book_detail_update_both(self):
         with open(self.valid_pdf_path, 'rb') as f:
@@ -127,6 +129,8 @@ class BookAPITests(APITestCase):
         self.files_to_clean.append(self.book.file.path)
         self.assertEqual(self.book.title, 'Updated Both')
         self.assertTrue(self.book.file.name.endswith('.pdf'))
+        self.assertIn('Chapter_7', self.book.file.name)
+
     
     def test_put_book_detail_not_found(self):
         data = {

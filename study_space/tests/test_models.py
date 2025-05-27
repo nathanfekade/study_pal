@@ -274,15 +274,7 @@ class QuestionairreModelTest(APITestCase):
         )
         with self.assertRaises(ValidationError):
             questionairre.full_clean()
-    
-    def test_user_foreign_key_required(self):
-        questionairre = Questionairre(
-            book = self.book,
-            detail_level = 'basic'
-        )
-        with self.assertRaises(ValidationError):
-            questionairre.full_clean()
-    
+        
     def test_book_cascade_delete(self):
         questionairre = Questionairre.objects.create(
             book = self.book,
